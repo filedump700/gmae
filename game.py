@@ -83,6 +83,7 @@ def att():
     print("3 to do 2.5x dmg with 60%c chance" % "%")
     print("4 to do 20x dmg with 6%c chance" % "%")
     print("5 to use 1 potion to heal for 50 hp")
+    print("break to close the game")
     while  not j.isnumeric() and j != 'break':
         j = input("> ")
     if j == 'break':
