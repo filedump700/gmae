@@ -1,7 +1,7 @@
 import random
 import math
 import os
-player = [100,3,-1,0,[1,1,1,0],[False]] #[hp,potions,rounds,gold,level]
+player = [100,3,-1,0,[1,1,1,0],[False,False,False,False,0],[0,1]] #[hp,potions,rounds,gold,level,upgrades,[Crit chance,crit mul]]
 enemy = [0]
 difficluty = -1
 name = ["Novice", "Easy" , "Normal" , "Hard", "Expert", "Impossible"]
@@ -10,23 +10,61 @@ hp = [[200,180,160,135,100,60],[100,120,140,165,190,300]]
 potion = [7,5,3,3,2,1]
 eb = 1.05
 mi = [8,6,4,0,0,0]
-
+class playerget():
+    def hmul():
+        ret = 1
+        ret *= player[4][2]
+        if player[5][0]:
+            ret *= 1.5
+        return ret
+    def hmax():
+        return hp[0][difficluty] * pget.hmul()
+    def hemul():
+        ret = 1
+        ret /= player[4][1]
+        return 
+    def hemax():
+        return hp[1][difficluty] * pget.hemax()
+    def atmul():
+        ret = 1
+        return ret
+    def gmul():
+        ret = 1
+        if player[5][3]:
+            ret *= 2
+        ret *= 1.1 ** player[5][4]
+        return ret
+class mathsupport():
+    def rk(a,b):
+        a *= 10 ** b
+        a = round(a)
+        a /= 10 ** b
+        return a
+    def psf(val , start , strength = 2 ):
+        if val < start:
+            return val
+        return start * ( val / start ) ** ( 1 / strength )
+    def lgsf(val , start):
+        if val < start:
+            return val
+        return math.log(val) / math.log(start) * start
+m = mathsupport
+pget = playerget
 def init():
     global player
     global enemy
-    player[0] = hp[0][difficluty]*hmul()
+    player[0] = hp[0][difficluty]*pget.hmul()
     player[1] = potion[difficluty]
     enemy = [int(hp[1][difficluty] * ( eb ** (player[2] ** 2))/player[4][1])]
-
 def init2():
     global player
     global enemy
-    player[0] = hp[0][difficluty]*hmul()
+    player[0] = hp[0][difficluty]*pget.hmul()
     player[1] = potion[difficluty]
     player[2] = -1
     player[4] = [1,1,1,0]
     enemy = [int(hp[1][difficluty])]
-
+    eb = 1.05
 def start():
     global difficluty
     global enemy
@@ -55,12 +93,11 @@ def start():
         start2()
     print("good choice")
     print("on " + name[difficluty] +" mode")
-    print("you stats are " + str(dmg[0][difficluty]) + " dmg and " + str(hp[0][difficluty] * hmul()) + " hp")
+    print("you stats are " + str(dmg[0][difficluty]) + " dmg and " + str(hp[0][difficluty] * pget.hmul()) + " hp")
     print("and also you start with " + str(potion[difficluty]) + " potions")
     print("enemy stats are " + str(dmg[1][difficluty]) + " dmg and " + str(hp[1][difficluty]) + " hp")
     init()
     return
-
 def pscreen():
     j = ""
     global player
@@ -71,11 +108,10 @@ def pscreen():
     print("")
     print("")
     print("     You")
-    print("Hp: " + str(int(player[0])) + "/" + str(int(hp[0][difficluty] * hmul())) + " dmg: " + str(int(dmg[0][difficluty]* player[4][0])) + " gold: " + str(player[3]))
+    print("Hp: " + str(int(player[0])) + "/" + str(int(hp[0][difficluty] * pget.hmul())) + " dmg: " + str(int(dmg[0][difficluty]* player[4][0])) + " gold: " + str(player[3]))
     print("You have " + str(player[1]) + " potions") 
     print("------------------------------------------")
     return att()
-
 def att():
     print("Type")
     print("1 to do 1x dmg with 100%c chance" % "%")
@@ -84,13 +120,14 @@ def att():
     print("4 to do 20x dmg with 6%c chance" % "%")
     print("5 to use 1 potion to heal for 50 hp")
     print("break to close the game")
+    j = ""
     while  not j.isnumeric() and j != 'break':
         j = input("> ")
     if j == 'break':
         return [-1,-1]
     j = int(j)
     dm = [0,0]
-    if random.random() < ( 0.75 + difficluty * 0.05 + player[2] * 0.01 - player[4][3] * 0.25):
+    if random.random() < ( 0.75 + difficluty * 0.05 + player[2] * 0.01 - player[4][3] * 0.025):
         dm[0] = int(dmg[1][difficluty] * ( 0.7 + random.random() * 0.6) * ( eb ** (player[2] ** 2)))
         print("The enemy attacks for " + str(dm[0]) + " damage")
     else:
@@ -98,7 +135,9 @@ def att():
         print("The enemy misses")
     dm[1] = int(dmg[0][difficluty] * player[4][0])
     print("")
-    if j == 2:
+    if j == 1:
+        dm *= 1
+    elif j == 2:
         if random.random() < 0.8:
             dm[1] *= 1.5
         else:
@@ -123,8 +162,8 @@ def att():
             else:
                 player[0] += 50
                 player[1] -= 1
-                if player[0] > hmax():
-                    player[0] = hmax()
+                if player[0] > pget.hmax():
+                    player[0] = pget.hmax()
                     print("You full healed")
                 else:
                     print("You healed 50 hp")
@@ -139,13 +178,14 @@ def att():
     else:
         print("You have no idea what you did")
         dm[1] = 0
+    if random.random() < player[6][0]:
+        dm[1] *= player[6][1]
+        print("Critical hit")
     if dm[1] == 0:
         print("You missed")
     else:
         print("You did " + str(dm[1]) + " damage to the enemy")
     return dm
-
-
 def loop():
     global player
     global enemy
@@ -153,11 +193,8 @@ def loop():
     if a == [-1,-1]:
         return -1
     player[0] -= a[0]
-    if player[0] <= 0:
-        return
     enemy[0] -= a[1]
     return
-
 def game():
     a = 0
     while player[0] > 0 and enemy[0] > 0 and a != -1:
@@ -168,7 +205,6 @@ def game():
         return 1
     else:
         return 0
-
 def r():
     global player
     start()
@@ -183,16 +219,17 @@ def r():
     if a == 2:
         return -1
     if player[2] > mi[difficluty]:
-        g = difficluty ** 2 * player[2]
+        g = int(( difficluty + 1 ) ** 1.5 * player[2] ** 1.2)
     else:
         g = 0
+    g *= pget.gmul()
     print("You got to round " + str(player[2]) + " on " + name[difficluty] + " good job")
     print("And you also got " + str(g) + " gold" )
     return g
-
 def rgame():
     global player
     load()
+    save()
     while True:
         g = r()
         if g == -1:
@@ -202,7 +239,6 @@ def rgame():
         pscreen2()
         save()
         init2()
-
 def start2():
     global difficluty
     print("What difficulty do you want to start on?")
@@ -228,18 +264,14 @@ def start2():
         print("difficluty not recognized")
         start2()
     return
-
 def gain():
     global eb
     a = ""
     q = 1.1 + player[2] / 7.5
-    if q > 1.5:
-        q = ( q / 1.5 ) ** 0.75 * 1.5
-    if q > 2:
-        q = math.log(q) / math.log(2) * 2
-    if q > 3:
-        q = ( q / 3 ) ** 0.25 * 3,1
-    q = rk(q,2)
+    q = m.psf(q,1.5,2)
+    q = m.lgsf(q,2)
+    q = m.psf(q,3,4)
+    q = m.rk(q,2)
     print("Choose an upgrade to get")
     print("Type 1 to multiply your damage by " + str(q))
     print("Type 2 to divide enemy hp by " + str(q))
@@ -256,19 +288,13 @@ def gain():
     elif a == 3:
         player[4][2] *= q
     elif a == 4 and player[2] % 5 == 0 and player[2] > 0:
-        eb -=   0.05 / (( 1 + player[4][3] / 2 ) ** 2 ) / ( (2 * math.pi ** 2 - 6) / 3 )
+        eb -=  0.2 / (( 2 + player[4][3] ) ** 2 ) / (( 2 / 3 ) * math.pi ** 2 - 4 )
+        player[4][3] += 1
+    else:
         print("You were dumb and did nothing")
     return
-
-def rk(a,b):
-    a *= 10 ** b
-    a = round(a)
-    a /= 10 ** b
-    return a
-
 def cf():
     return os.path.exists("game.txt")
-
 def save():
     pq = open("game.txt","w")
     pq.write(str(player[3])+"\n")
@@ -276,19 +302,46 @@ def save():
         pq.write("1" + "\n")
     else:
         pq.write("0" + "\n")
-
+    if player[5][1]:
+        pq.write("1" + "\n")
+    else:
+        pq.write("0" + "\n")
+    if player[5][2]:
+        pq.write("1" + "\n")
+    else:
+        pq.write("0" + "\n")
+    if player[5][3]:
+        pq.write("1" + "\n")
+    else:
+        pq.write("0" + "\n")
+    pq.write(str(player[5][4]) + "\n")
 def load():
+    global player
     if cf():
         fi = open("game.txt")
         a = fi.readlines()
-        a[0] = int(a[0])
-        player[3] = a[0]
-        if a[1] == "1\n":
-            player[5][0] = True
+        l = len(a)
+        if l > 0:
+            a[0] = int(float(a[0]))
+            player[3] = a[0]
+        if l > 1:
+            player[5][0] = pa(a[0])
+        if l > 2:
+            if a[2] == "1\n":
+                player[5][1] = True
+                player[6][0] += 0.1
+                player[6][1] *= 2
+        if l > 3:
+            if a[3] == "1\n":
+                player[5][2] = True
+                player[6][0] += 0.05
+        if l > 4:
+            player[5][3] = pa(a[4])
+        if l > 5:
+            player[5][4] = int(a[5])
         return
     else:
         return
-
 def pscreen2():
     a = "a"
     print("------------------------------------------")
@@ -299,33 +352,61 @@ def pscreen2():
     print("------------------------------------------")
     print("Upgrade 1: You have 50% more hp")
     if player[5][0]:
-        print("Cost: 100 gold [Bought]")
+        print("Cost: 40 gold [Bought]")
     else:
-        print("Cost: 100 gold")
+        print("Cost: 40 gold")
+    print("Upgrade 2: You have 10%c chance to do a crit which does 2x damage" % "%")
+    if player[5][1]:
+        print("Cost: 75 gold [Bought]")
+    else:
+        print("Cost: 75 gold")
+    if player[5][1]:
+        print("Upgrade 3: The crit chance is boosted to 15%")
+        if player[5][2]:
+            print("Cost: 50 gold [Bought]")
+        else:
+            print("Cost: 50 gold")
+    if player[5][1]:
+        print("Upgrade 4: Double gold gain")
+        if player[5][3]:
+            print("Cost: 100 gold [Bought]")
+        else:
+            print("Cost: 100 gold")
+    if player[5][3]:
+        print("Upgrade 5: Gain 10% more gold (" + str(player[5][4]) + ")")
+        print("Cost: " + str(int(2 ** player[5][4])) + " gold")
+
     print("------------------------------------------")
     while not a.isnumeric():
         a = input("> ")
-    if a == "1":
-        buy(1)
+    a = int(a)
+    buy(a)
     print("see you next time")
-
-def hmul():
-    ret = 1
-    ret *= player[4][2]
-    if player[5][0]:
-        ret *= 1.5
-    return ret
-
-def hmax():
-    return hp[0][difficluty] * hmul()
-
 def buy(a):
     global player
-    if a == 1 and player[3] >= 100:
-        player[3] -= 100
+    if a == 1 and player[3] >= 40 and not player[5][0]:
+        player[3] -= 40
         player[5][0] = True
         print("Hp increased by 50%")
         return
-
+    if a == 2 and player[3] >= 75 and not player[5][1]:
+        player[3] -= 75
+        player[5][1] = True
+        player[6][0] += 0.1
+        player[6][1] *= 2
+        print("Crit chance increased by 10%")
+        return
+    if a == 3 and player[3] >= 50 and not player[5][2]:
+        player[3] -= 50
+        player[5][2] = True
+        player[6][0] += 0.05
+    if a == 4 and player[3] >= 100 and not player[5][3]:
+        player[3] -= 100
+        player[5][3] = True
+    if a == 5 and player[3] >= 2 ** player[5][4]:
+        player[3] -= 2 ** player[5][4]
+        player[5][4] += 1
+def pa(a):
+    return bool(int(a))
 
 rgame()
